@@ -63,12 +63,19 @@ export const getMessageReactions = query({
     );
 
     const grouped = reactionsWithUsers.reduce((acc, reaction) => {
-      if (!acc[reaction.emoji]) {
-        acc[reaction.emoji] = [];
+      const existing = acc.find((item) => item.emoji === reaction.emoji);
+      if (existing) {
+        existing.reactions.push(reaction);
+        existing.count++;
+      } else {
+        acc.push({
+          emoji: reaction.emoji,
+          count: 1,
+          reactions: [reaction],
+        });
       }
-      acc[reaction.emoji].push(reaction);
       return acc;
-    }, {} as Record<string, typeof reactionsWithUsers>);
+    }, [] as Array<{ emoji: string; count: number; reactions: typeof reactionsWithUsers }>);
 
     return grouped;
   },

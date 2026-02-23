@@ -1,22 +1,55 @@
 "use client";
 
-import { useEffect } from "react";
-import { useMutation } from "convex/react";
+import { useEffect, useRef } from "react";
+import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
+
+// Global state to prevent multiple instances from firing simultaneously
+let globalLastUpdate = 0;
+let globalIsUpdating = false;
 
 export function useUserPresence() {
   const updateUserStatus = useMutation(api.users.updateUserStatus);
+  const currentUser = useQuery(api.users.getCurrentUser);
+  const mountedRef = useRef(false);
 
   useEffect(() => {
+    if (!currentUser || mountedRef.current) return;
+    
+    mountedRef.current = true;
+    const MIN_UPDATE_INTERVAL = 10000; // 10 seconds minimum between any updates
+
     const setOnline = () => {
-      updateUserStatus({ isOnline: true }).catch(console.error);
+      const now = Date.now();
+      if (globalIsUpdating || now - globalLastUpdate < MIN_UPDATE_INTERVAL) {
+        return;
+      }
+
+      globalIsUpdating = true;
+      globalLastUpdate = now;
+      
+      updateUserStatus({ isOnline: true })
+        .catch(() => {}) // Silently fail
+        .finally(() => {
+          setTimeout(() => {
+            globalIsUpdating = false;
+          }, 1000);
+        });
     };
 
     const setOffline = () => {
-      updateUserStatus({ isOnline: false }).catch(console.error);
+      if (globalIsUpdating) return;
+      
+      globalIsUpdating = true;
+      updateUserStatus({ isOnline: false })
+        .catch(() => {})
+        .finally(() => {
+          globalIsUpdating = false;
+        });
     };
 
-    setOnline();
+    // Only set online once on mount
+    setTimeout(setOnline, 1000);
 
     const handleVisibilityChange = () => {
       if (document.hidden) {
@@ -26,24 +59,23 @@ export function useUserPresence() {
       }
     };
 
-    const handleBeforeUnload = () => {
-      setOffline();
-    };
-
     document.addEventListener("visibilitychange", handleVisibilityChange);
-    window.addEventListener("beforeunload", handleBeforeUnload);
 
+    // Much longer heartbeat - 2 minutes
     const interval = setInterval(() => {
       if (!document.hidden) {
         setOnline();
       }
-    }, 30000);
+    }, 120000);
 
     return () => {
-      setOffline();
       document.removeEventListener("visibilitychange", handleVisibilityChange);
-      window.removeEventListener("beforeunload", handleBeforeUnload);
       clearInterval(interval);
+      mountedRef.current = false;
+      // Don't call setOffline on unmount during development (hot reload)
+      if (process.env.NODE_ENV === 'production') {
+        setOffline();
+      }
     };
-  }, [updateUserStatus]);
+  }, [updateUserStatus, currentUser]);
 }

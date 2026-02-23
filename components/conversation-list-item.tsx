@@ -4,6 +4,7 @@ import Image from "next/image";
 import { Doc } from "@/convex/_generated/dataModel";
 import { OnlineStatus } from "./online-status";
 import { UnreadBadge } from "./unread-badge";
+import { Users } from "lucide-react";
 
 interface ConversationWithDetails {
   _id: string;
@@ -13,6 +14,7 @@ interface ConversationWithDetails {
   createdAt: number;
   updatedAt: number;
   otherParticipant: Doc<"users"> | null;
+  participants?: (Doc<"users"> | null)[] | null;
   lastMessage?: {
     content: string;
     createdAt: number;
@@ -42,7 +44,22 @@ export function ConversationListItem({
         isActive ? "bg-primary/10" : "hover:bg-secondary"
       }`}
     >
-      {conversation.otherParticipant && (
+      {conversation.isGroup ? (
+        <>
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/20">
+            <Users className="h-5 w-5 text-primary" />
+          </div>
+          <div className="flex flex-1 flex-col items-start overflow-hidden">
+            <span className="text-sm font-medium text-foreground">
+              {conversation.groupName || "Unnamed Group"}
+            </span>
+            <span className="text-xs text-muted-foreground">
+              {conversation.participantIds.length} members
+            </span>
+          </div>
+          <UnreadBadge conversationId={conversation._id} />
+        </>
+      ) : conversation.otherParticipant ? (
         <>
           <div className="relative">
             <Image
@@ -72,7 +89,7 @@ export function ConversationListItem({
           </div>
           <UnreadBadge conversationId={conversation._id} />
         </>
-      )}
+      ) : null}
     </button>
   );
 }

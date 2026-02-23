@@ -14,18 +14,29 @@ export function MessageInput({ onSendMessage, onTypingChange, disabled }: Messag
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const isTypingRef = useRef(false);
 
   useEffect(() => {
     if (message.trim() && onTypingChange) {
-      onTypingChange(true);
+      if (!isTypingRef.current) {
+        isTypingRef.current = true;
+        onTypingChange(true);
+      }
 
       if (typingTimeoutRef.current) {
         clearTimeout(typingTimeoutRef.current);
       }
 
       typingTimeoutRef.current = setTimeout(() => {
+        isTypingRef.current = false;
         onTypingChange(false);
-      }, 2000);
+      }, 3000);
+    } else if (!message.trim() && onTypingChange && isTypingRef.current) {
+      isTypingRef.current = false;
+      onTypingChange(false);
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
     }
 
     return () => {
@@ -40,7 +51,9 @@ export function MessageInput({ onSendMessage, onTypingChange, disabled }: Messag
 
     setIsSending(true);
     setError(null);
-    if (onTypingChange) {
+    
+    if (onTypingChange && isTypingRef.current) {
+      isTypingRef.current = false;
       onTypingChange(false);
     }
     if (typingTimeoutRef.current) {

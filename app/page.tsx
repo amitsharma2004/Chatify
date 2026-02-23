@@ -6,6 +6,7 @@ import { UserSidebar } from "@/components/user-sidebar";
 import { ConversationSidebar } from "@/components/conversation-sidebar";
 import { ChatArea } from "@/components/chat-area";
 import { ChatHeader } from "@/components/chat-header";
+import { CreateGroupModal } from "@/components/create-group-modal";
 import { useState } from "react";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
@@ -15,8 +16,10 @@ import { AlertCircle } from "lucide-react";
 export default function Home() {
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
   const [showUserList, setShowUserList] = useState(false);
+  const [showGroupModal, setShowGroupModal] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const createOrGetConversation = useMutation(api.conversations.createOrGetConversation);
+  const createGroupConversation = useMutation(api.conversations.createGroupConversation);
   const conversations = useQuery(api.conversations.getConversations);
 
   const selectedConversation = conversations?.find(
@@ -34,6 +37,22 @@ export default function Home() {
     } catch (error) {
       console.error("Error creating conversation:", error);
       setError(error instanceof Error ? error.message : "Failed to create conversation");
+    }
+  };
+
+  const handleCreateGroup = async (participantIds: Id<"users">[], groupName: string) => {
+    try {
+      setError(null);
+      const conversationId = await createGroupConversation({
+        participantIds,
+        groupName,
+      });
+      setSelectedConversationId(conversationId);
+      setShowGroupModal(false);
+    } catch (error) {
+      console.error("Error creating group:", error);
+      setError(error instanceof Error ? error.message : "Failed to create group");
+      throw error;
     }
   };
 
@@ -69,6 +88,7 @@ export default function Home() {
               <ConversationSidebar
                 selectedConversationId={selectedConversationId}
                 onConversationSelect={setSelectedConversationId}
+                onNewGroup={() => setShowGroupModal(true)}
               />
             )}
           </div>
@@ -82,9 +102,15 @@ export default function Home() {
               <>
                 <ChatHeader
                   otherParticipant={selectedConversation.otherParticipant}
+                  isGroup={selectedConversation.isGroup}
+                  groupName={selectedConversation.groupName}
+                  memberCount={selectedConversation.participantIds.length}
                   onBack={handleBackToList}
                 />
-                <ChatArea conversationId={selectedConversationId} />
+                <ChatArea
+                  conversationId={selectedConversationId}
+                  isGroupChat={selectedConversation.isGroup}
+                />
               </>
             ) : (
               <div className="flex flex-1 flex-col items-center justify-center p-4">
@@ -104,6 +130,11 @@ export default function Home() {
             )}
           </main>
         </div>
+        <CreateGroupModal
+          isOpen={showGroupModal}
+          onClose={() => setShowGroupModal(false)}
+          onCreateGroup={handleCreateGroup}
+        />
       </div>
     </StoreUserWrapper>
   );

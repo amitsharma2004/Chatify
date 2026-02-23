@@ -17,30 +17,30 @@ export function MessageReactions({
   const reactions = useQuery(api.reactions.getMessageReactions, { messageId });
   const [hoveredEmoji, setHoveredEmoji] = useState<string | null>(null);
 
-  if (!reactions || Object.keys(reactions).length === 0) {
+  if (!reactions || reactions.length === 0) {
     return null;
   }
 
   return (
     <div className="mt-1 flex flex-wrap gap-1">
-      {Object.entries(reactions).map(([emoji, reactionList]) => (
-        <div key={emoji} className="relative">
+      {reactions.map((reactionGroup) => (
+        <div key={reactionGroup.emoji} className="relative">
           <button
-            onClick={() => onReactionClick(emoji)}
-            onMouseEnter={() => setHoveredEmoji(emoji)}
+            onClick={() => onReactionClick(reactionGroup.emoji)}
+            onMouseEnter={() => setHoveredEmoji(reactionGroup.emoji)}
             onMouseLeave={() => setHoveredEmoji(null)}
             className="flex items-center gap-1 rounded-full border border-border bg-secondary px-2 py-0.5 text-xs transition-colors hover:bg-secondary/80"
           >
-            <span>{emoji}</span>
-            <span className="text-muted-foreground">{reactionList.length}</span>
+            <span>{reactionGroup.emoji}</span>
+            <span className="text-muted-foreground">{reactionGroup.count}</span>
           </button>
 
-          {hoveredEmoji === emoji && (
+          {hoveredEmoji === reactionGroup.emoji && (
             <div className="absolute bottom-full left-0 z-10 mb-2 whitespace-nowrap rounded-lg border border-border bg-background px-2 py-1 text-xs shadow-lg">
-              {reactionList.map((r, i) => (
+              {reactionGroup.reactions.map((r, i) => (
                 <span key={r._id}>
                   {r.user?.name}
-                  {i < reactionList.length - 1 && ", "}
+                  {i < reactionGroup.reactions.length - 1 && ", "}
                 </span>
               ))}
             </div>

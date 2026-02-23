@@ -5,25 +5,36 @@ import { api } from "@/convex/_generated/api";
 import { ConversationListItem } from "./conversation-list-item";
 import { UserListSkeleton } from "./user-list-skeleton";
 import { EmptyState } from "./empty-state";
-import { MessageSquare, MessagesSquare } from "lucide-react";
+import { MessageSquare, MessagesSquare, Users } from "lucide-react";
 
 interface ConversationSidebarProps {
   selectedConversationId: string | null;
   onConversationSelect: (conversationId: string) => void;
+  onNewGroup: () => void;
 }
 
 export function ConversationSidebar({
   selectedConversationId,
   onConversationSelect,
+  onNewGroup,
 }: ConversationSidebarProps) {
   const conversations = useQuery(api.conversations.getConversations);
 
   return (
     <div className="flex h-full w-full flex-col border-r border-border bg-background">
       <div className="border-b border-border p-4">
-        <div className="flex items-center gap-2">
-          <MessageSquare className="h-5 w-5 text-primary" />
-          <h2 className="text-lg font-semibold text-foreground">Conversations</h2>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <MessageSquare className="h-5 w-5 text-primary" />
+            <h2 className="text-lg font-semibold text-foreground">Conversations</h2>
+          </div>
+          <button
+            onClick={onNewGroup}
+            className="rounded-lg p-2 hover:bg-secondary"
+            title="Create Group"
+          >
+            <Users className="h-5 w-5 text-primary" />
+          </button>
         </div>
       </div>
 

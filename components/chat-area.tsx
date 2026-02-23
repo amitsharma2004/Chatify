@@ -14,9 +14,10 @@ import { MessageCircle, ArrowDown, AlertCircle } from "lucide-react";
 
 interface ChatAreaProps {
   conversationId: string;
+  isGroupChat?: boolean;
 }
 
-export function ChatArea({ conversationId }: ChatAreaProps) {
+export function ChatArea({ conversationId, isGroupChat }: ChatAreaProps) {
   const { user } = useUser();
   const messages = useQuery(api.messages.getMessages, {
     conversationId: conversationId as Id<"conversations">,
@@ -30,6 +31,8 @@ export function ChatArea({ conversationId }: ChatAreaProps) {
   const [isAtBottom, setIsAtBottom] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const previousMessageCountRef = useRef(0);
+  const lastTypingUpdateRef = useRef(0);
+  const lastMarkAsReadRef = useRef(0);
 
   const scrollToBottom = (behavior: ScrollBehavior = "smooth") => {
     messagesEndRef.current?.scrollIntoView({ behavior });
@@ -45,6 +48,11 @@ export function ChatArea({ conversationId }: ChatAreaProps) {
       threshold;
     
     setIsAtBottom(isBottom);
+    
+    if (!isBottom && messages && messages.length > previousMessageCountRef.current) {
+      setShowNewMessageButton(true);
+    }
+    
     return isBottom;
   };
 
@@ -69,25 +77,40 @@ export function ChatArea({ conversationId }: ChatAreaProps) {
     const currentMessageCount = messages.length;
     const hasNewMessages = currentMessageCount > previousMessageCountRef.current;
 
+    previousMessageCountRef.current = currentMessageCount;
+
     if (hasNewMessages) {
       if (isAtBottom) {
         scrollToBottom("smooth");
-        setShowNewMessageButton(false);
-      } else {
-        setShowNewMessageButton(true);
       }
     }
-
-    previousMessageCountRef.current = currentMessageCount;
   }, [messages, isAtBottom]);
 
   useEffect(() => {
-    if (messages && messages.length > 0) {
-      markAsRead({
-        conversationId: conversationId as Id<"conversations">,
-      }).catch(console.error);
+    if (isAtBottom) {
+      setShowNewMessageButton(false);
     }
-  }, [messages, conversationId, markAsRead]);
+  }, [isAtBottom]);
+
+  useEffect(() => {
+    if (messages && messages.length > 0) {
+      const now = Date.now();
+      // Only mark as read once every 3 seconds
+      if (now - lastMarkAsReadRef.current < 3000) {
+        return;
+      }
+      
+      lastMarkAsReadRef.current = now;
+      
+      const timeoutId = setTimeout(() => {
+        markAsRead({
+          conversationId: conversationId as Id<"conversations">,
+        }).catch(() => {}); // Silently fail
+      }, 2000);
+
+      return () => clearTimeout(timeoutId);
+    }
+  }, [messages?.length, conversationId, markAsRead]);
 
   const handleSendMessage = async (content: string) => {
     try {
@@ -105,12 +128,20 @@ export function ChatArea({ conversationId }: ChatAreaProps) {
   };
 
   const handleTypingChange = async (isTyping: boolean) => {
+    // Throttle typing status updates
+    const now = Date.now();
+    if (now - lastTypingUpdateRef.current < 2000) {
+      return; // Don't update more than once every 2 seconds
+    }
+    
+    lastTypingUpdateRef.current = now;
+    
     try {
       await setTypingStatus({
         conversationId: isTyping ? (conversationId as Id<"conversations">) : undefined,
       });
     } catch (error) {
-      console.error("Error updating typing status:", error);
+      // Silently fail to prevent error spam
     }
   };
 
@@ -161,6 +192,7 @@ export function ChatArea({ conversationId }: ChatAreaProps) {
                 key={message._id}
                 message={message}
                 isCurrentUser={message.sender?.clerkId === user?.id}
+                isGroupChat={isGroupChat}
               />
             ))}
             <div ref={messagesEndRef} />

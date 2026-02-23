@@ -1,6 +1,5 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
-import { Doc, Id } from "./_generated/dataModel";
 
 export const createOrGetConversation = mutation({
   args: {
@@ -48,6 +47,45 @@ export const createOrGetConversation = mutation({
   },
 });
 
+export const createGroupConversation = mutation({
+  args: {
+    participantIds: v.array(v.id("users")),
+    groupName: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Unauthorized");
+    }
+
+    const currentUser = await ctx.db
+      .query("users")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
+      .unique();
+
+    if (!currentUser) {
+      throw new Error("User not found");
+    }
+
+    if (args.participantIds.length < 2) {
+      throw new Error("Group must have at least 2 members");
+    }
+
+    const allParticipantIds = [...args.participantIds, currentUser._id];
+    const uniqueParticipantIds = Array.from(new Set(allParticipantIds));
+
+    const conversationId = await ctx.db.insert("conversations", {
+      participantIds: uniqueParticipantIds,
+      isGroup: true,
+      groupName: args.groupName,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    });
+
+    return conversationId;
+  },
+});
+
 export const getConversations = query({
   args: {},
   handler: async (ctx) => {
@@ -73,13 +111,21 @@ export const getConversations = query({
 
     const conversationsWithDetails = await Promise.all(
       userConversations.map(async (conversation) => {
-        const otherParticipantId = conversation.participantIds.find(
-          (id) => id !== currentUser._id
-        );
+        let otherParticipant = null;
+        let participants = null;
 
-        const otherParticipant = otherParticipantId
-          ? await ctx.db.get(otherParticipantId)
-          : null;
+        if (conversation.isGroup) {
+          participants = await Promise.all(
+            conversation.participantIds.map((id) => ctx.db.get(id))
+          );
+        } else {
+          const otherParticipantId = conversation.participantIds.find(
+            (id) => id !== currentUser._id
+          );
+          otherParticipant = otherParticipantId
+            ? await ctx.db.get(otherParticipantId)
+            : null;
+        }
 
         const messages = await ctx.db
           .query("messages")
@@ -94,6 +140,7 @@ export const getConversations = query({
         return {
           ...conversation,
           otherParticipant,
+          participants,
           lastMessage,
         };
       })
@@ -112,7 +159,7 @@ export const markAsRead = mutation({
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {
-      throw new Error("Unauthorized");
+      return;
     }
 
     const currentUser = await ctx.db
@@ -121,7 +168,7 @@ export const markAsRead = mutation({
       .unique();
 
     if (!currentUser) {
-      throw new Error("User not found");
+      return;
     }
 
     const messages = await ctx.db
@@ -140,28 +187,28 @@ export const markAsRead = mutation({
 
     const conversation = await ctx.db.get(args.conversationId);
     if (!conversation) {
-      throw new Error("Conversation not found");
+      return;
     }
 
     const lastReadBy = conversation.lastReadBy || [];
-    const existingIndex = lastReadBy.findIndex(
+    const existingEntry = lastReadBy.find(
       (entry) => entry.userId === currentUser._id
     );
 
-    if (existingIndex >= 0) {
-      lastReadBy[existingIndex] = {
-        userId: currentUser._id,
-        messageId: lastMessage._id,
-      };
-    } else {
-      lastReadBy.push({
-        userId: currentUser._id,
-        messageId: lastMessage._id,
-      });
+    if (existingEntry && existingEntry.messageId === lastMessage._id) {
+      return;
     }
 
+    const updatedLastReadBy = lastReadBy.filter(
+      (entry) => entry.userId !== currentUser._id
+    );
+    updatedLastReadBy.push({
+      userId: currentUser._id,
+      messageId: lastMessage._id,
+    });
+
     await ctx.db.patch(args.conversationId, {
-      lastReadBy,
+      lastReadBy: updatedLastReadBy,
     });
   },
 });

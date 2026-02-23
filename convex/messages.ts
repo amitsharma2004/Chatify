@@ -40,7 +40,7 @@ export const sendMessage = mutation({
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {
-      throw new Error("Unauthorized");
+      throw new Error("Unauthorized - Please sign in again");
     }
 
     const currentUser = await ctx.db
@@ -49,7 +49,12 @@ export const sendMessage = mutation({
       .unique();
 
     if (!currentUser) {
-      throw new Error("User not found");
+      throw new Error("User not found - Please refresh the page");
+    }
+
+    const conversation = await ctx.db.get(args.conversationId);
+    if (!conversation) {
+      throw new Error("Conversation not found");
     }
 
     const messageId = await ctx.db.insert("messages", {

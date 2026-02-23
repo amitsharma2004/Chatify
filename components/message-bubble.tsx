@@ -23,9 +23,10 @@ interface MessageWithSender {
 interface MessageBubbleProps {
   message: MessageWithSender;
   isCurrentUser: boolean;
+  isGroupChat?: boolean;
 }
 
-export function MessageBubble({ message, isCurrentUser }: MessageBubbleProps) {
+export function MessageBubble({ message, isCurrentUser, isGroupChat }: MessageBubbleProps) {
   const deleteMessage = useMutation(api.messages.deleteMessage);
   const toggleReaction = useMutation(api.reactions.toggleReaction);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -71,6 +72,11 @@ export function MessageBubble({ message, isCurrentUser }: MessageBubbleProps) {
           isCurrentUser ? "items-end" : "items-start"
         }`}
       >
+        {isGroupChat && !isCurrentUser && message.sender && (
+          <span className="mb-1 text-xs font-medium text-muted-foreground">
+            {message.sender.name}
+          </span>
+        )}
         <div className="group relative">
           <div
             className={`max-w-xs rounded-lg px-4 py-2 ${
