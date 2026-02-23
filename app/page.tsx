@@ -4,8 +4,10 @@ import { Header } from "@/components/header";
 import { StoreUserWrapper } from "@/components/store-user-wrapper";
 import { UserSidebar } from "@/components/user-sidebar";
 import { ConversationSidebar } from "@/components/conversation-sidebar";
+import { ChatArea } from "@/components/chat-area";
+import { ChatHeader } from "@/components/chat-header";
 import { useState } from "react";
-import { useMutation } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 
@@ -13,6 +15,11 @@ export default function Home() {
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
   const [showUserList, setShowUserList] = useState(false);
   const createOrGetConversation = useMutation(api.conversations.createOrGetConversation);
+  const conversations = useQuery(api.conversations.getConversations);
+
+  const selectedConversation = conversations?.find(
+    (conv) => conv._id === selectedConversationId
+  );
 
   const handleUserSelect = async (userId: string) => {
     try {
@@ -40,15 +47,14 @@ export default function Home() {
             />
           )}
           
-          <main className="flex flex-1 flex-col items-center justify-center">
-            {selectedConversationId ? (
-              <div className="text-center">
-                <p className="text-lg text-muted-foreground">
-                  Chat view coming soon...
-                </p>
-              </div>
+          <main className="flex flex-1 flex-col">
+            {selectedConversationId && selectedConversation ? (
+              <>
+                <ChatHeader otherParticipant={selectedConversation.otherParticipant} />
+                <ChatArea conversationId={selectedConversationId} />
+              </>
             ) : (
-              <div className="text-center">
+              <div className="flex flex-1 flex-col items-center justify-center">
                 <h2 className="text-2xl font-semibold text-foreground">
                   Welcome to Chatify
                 </h2>
