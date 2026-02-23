@@ -4,7 +4,8 @@ import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { ConversationListItem } from "./conversation-list-item";
 import { UserListSkeleton } from "./user-list-skeleton";
-import { MessageSquare } from "lucide-react";
+import { EmptyState } from "./empty-state";
+import { MessageSquare, MessagesSquare } from "lucide-react";
 
 interface ConversationSidebarProps {
   selectedConversationId: string | null;
@@ -30,12 +31,11 @@ export function ConversationSidebar({
         {conversations === undefined ? (
           <UserListSkeleton />
         ) : conversations.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-8 text-center">
-            <p className="text-sm text-muted-foreground">No conversations yet</p>
-            <p className="mt-1 text-xs text-muted-foreground">
-              Start a conversation with a user
-            </p>
-          </div>
+          <EmptyState
+            icon={MessagesSquare}
+            title="No conversations yet"
+            description="Start a conversation by selecting a user from the user list."
+          />
         ) : (
           <div className="space-y-1">
             {conversations.map((conversation) => (

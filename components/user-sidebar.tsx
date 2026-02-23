@@ -4,8 +4,9 @@ import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { UserListItem } from "./user-list-item";
 import { UserListSkeleton } from "./user-list-skeleton";
+import { EmptyState } from "./empty-state";
 import { useState, useMemo } from "react";
-import { Search } from "lucide-react";
+import { Search, Users, UserX } from "lucide-react";
 
 interface UserSidebarProps {
   onUserSelect: (userId: string) => void;
@@ -50,16 +51,19 @@ export function UserSidebar({ onUserSelect }: UserSidebarProps) {
         {users === undefined ? (
           <UserListSkeleton />
         ) : filteredUsers.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-8 text-center">
-            <p className="text-sm text-muted-foreground">
-              {searchQuery ? "No users found" : "No users available"}
-            </p>
-            {searchQuery && (
-              <p className="mt-1 text-xs text-muted-foreground">
-                Try a different search term
-              </p>
-            )}
-          </div>
+          searchQuery ? (
+            <EmptyState
+              icon={UserX}
+              title="No users found"
+              description="No users match your search. Try a different search term."
+            />
+          ) : (
+            <EmptyState
+              icon={Users}
+              title="No users available"
+              description="There are no other users to chat with yet."
+            />
+          )
         ) : (
           <div className="space-y-1">
             {filteredUsers.map((user) => (

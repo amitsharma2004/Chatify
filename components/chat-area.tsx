@@ -4,9 +4,11 @@ import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { MessageBubble } from "./message-bubble";
 import { MessageInput } from "./message-input";
+import { EmptyState } from "./empty-state";
 import { useEffect, useRef } from "react";
 import { Id } from "@/convex/_generated/dataModel";
 import { useUser } from "@clerk/nextjs";
+import { MessageCircle } from "lucide-react";
 
 interface ChatAreaProps {
   conversationId: string;
@@ -44,9 +46,11 @@ export function ChatArea({ conversationId }: ChatAreaProps) {
           </div>
         ) : messages.length === 0 ? (
           <div className="flex h-full items-center justify-center">
-            <p className="text-sm text-muted-foreground">
-              No messages yet. Start the conversation!
-            </p>
+            <EmptyState
+              icon={MessageCircle}
+              title="No messages yet"
+              description="Start the conversation by sending a message!"
+            />
           </div>
         ) : (
           <div className="space-y-4">
