@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { Doc } from "@/convex/_generated/dataModel";
 import { OnlineStatus } from "./online-status";
+import { UnreadBadge } from "./unread-badge";
 
 interface ConversationWithDetails {
   _id: string;
@@ -69,6 +70,7 @@ export function ConversationListItem({
               </span>
             )}
           </div>
+          <UnreadBadge conversationId={conversation._id} />
         </>
       )}
     </button>

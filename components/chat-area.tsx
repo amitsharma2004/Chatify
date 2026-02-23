@@ -22,6 +22,7 @@ export function ChatArea({ conversationId }: ChatAreaProps) {
   });
   const sendMessage = useMutation(api.messages.sendMessage);
   const setTypingStatus = useMutation(api.users.setTypingStatus);
+  const markAsRead = useMutation(api.conversations.markAsRead);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -31,6 +32,14 @@ export function ChatArea({ conversationId }: ChatAreaProps) {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  useEffect(() => {
+    if (messages && messages.length > 0) {
+      markAsRead({
+        conversationId: conversationId as Id<"conversations">,
+      }).catch(console.error);
+    }
+  }, [messages, conversationId, markAsRead]);
 
   const handleSendMessage = async (content: string) => {
     await sendMessage({

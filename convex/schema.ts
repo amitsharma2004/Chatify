@@ -21,6 +21,14 @@ export default defineSchema({
     groupName: v.optional(v.string()),
     createdAt: v.number(),
     updatedAt: v.number(),
+    lastReadBy: v.optional(
+      v.array(
+        v.object({
+          userId: v.id("users"),
+          messageId: v.id("messages"),
+        })
+      )
+    ),
   })
     .index("by_participant", ["participantIds"])
     .index("by_updated_at", ["updatedAt"]),
