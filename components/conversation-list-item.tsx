@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { Doc } from "@/convex/_generated/dataModel";
+import { OnlineStatus } from "./online-status";
 
 interface ConversationWithDetails {
   _id: string;
@@ -42,13 +43,18 @@ export function ConversationListItem({
     >
       {conversation.otherParticipant && (
         <>
-          <Image
-            src={conversation.otherParticipant.avatarUrl}
-            alt={conversation.otherParticipant.name}
-            width={40}
-            height={40}
-            className="rounded-full"
-          />
+          <div className="relative">
+            <Image
+              src={conversation.otherParticipant.avatarUrl}
+              alt={conversation.otherParticipant.name}
+              width={40}
+              height={40}
+              className="rounded-full"
+            />
+            <div className="absolute bottom-0 right-0">
+              <OnlineStatus isOnline={conversation.otherParticipant.isOnline} />
+            </div>
+          </div>
           <div className="flex flex-1 flex-col items-start overflow-hidden">
             <span className="text-sm font-medium text-foreground">
               {conversation.otherParticipant.name}

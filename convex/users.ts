@@ -77,3 +77,29 @@ export const getUsers = query({
     return users.filter((user) => user.clerkId !== identity.subject);
   },
 });
+
+export const updateUserStatus = mutation({
+  args: {
+    isOnline: v.boolean(),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Unauthorized");
+    }
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
+      .unique();
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    await ctx.db.patch(user._id, {
+      isOnline: args.isOnline,
+      lastSeen: Date.now(),
+    });
+  },
+});

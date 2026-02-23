@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { Doc } from "@/convex/_generated/dataModel";
+import { OnlineStatus } from "./online-status";
 import { ArrowLeft } from "lucide-react";
 
 interface ChatHeaderProps {
@@ -25,19 +26,24 @@ export function ChatHeader({ otherParticipant, onBack }: ChatHeaderProps) {
             <ArrowLeft className="h-5 w-5" />
           </button>
         )}
-        <Image
-          src={otherParticipant.avatarUrl}
-          alt={otherParticipant.name}
-          width={40}
-          height={40}
-          className="rounded-full"
-        />
+        <div className="relative">
+          <Image
+            src={otherParticipant.avatarUrl}
+            alt={otherParticipant.name}
+            width={40}
+            height={40}
+            className="rounded-full"
+          />
+          <div className="absolute bottom-0 right-0">
+            <OnlineStatus isOnline={otherParticipant.isOnline} size="md" />
+          </div>
+        </div>
         <div>
           <h2 className="text-lg font-semibold text-foreground">
             {otherParticipant.name}
           </h2>
           <p className="text-xs text-muted-foreground">
-            {otherParticipant.email}
+            {otherParticipant.isOnline ? "Online" : "Offline"}
           </p>
         </div>
       </div>
