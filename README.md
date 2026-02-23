@@ -4,8 +4,10 @@ A modern real-time chat application built with Next.js, Convex, and Clerk.
 
 ## Features
 
-- 🔐 Authentication with Clerk
+- 🔐 Authentication with Clerk (email/password and OAuth)
 - 💬 Real-time messaging with Convex
+- 👥 User list and search
+- 💭 Conversation creation and management
 - 🎨 Beautiful UI with Tailwind CSS
 - 📱 Responsive design
 - 🌙 Dark mode support
@@ -17,6 +19,7 @@ A modern real-time chat application built with Next.js, Convex, and Clerk.
 - **Authentication**: Clerk
 - **Styling**: Tailwind CSS
 - **Language**: TypeScript
+- **Icons**: Lucide React
 
 ## Getting Started
 
@@ -35,23 +38,18 @@ npm install
 
 2. Set up environment variables:
 
-Copy `.env.example` to `.env.local` and fill in your credentials:
-
-```bash
-cp .env.example .env.local
-```
+Copy `.env.example` to `.env.local` and fill in your credentials.
 
 3. Set up Clerk:
    - Create an account at [clerk.com](https://clerk.com)
    - Create a new application
    - Copy your API keys to `.env.local`
-   - See [docs/AUTHENTICATION.md](docs/AUTHENTICATION.md) for detailed instructions
 
 4. Set up Convex:
    - Run `npx convex dev` to initialize Convex
    - Follow the prompts to create a Convex project
    - Copy the `NEXT_PUBLIC_CONVEX_URL` to `.env.local`
-   - Configure Clerk-Convex integration (see [docs/CONVEX_SETUP.md](docs/CONVEX_SETUP.md))
+   - Configure Clerk-Convex integration in both dashboards
 
 5. Run the development server:
 
@@ -68,14 +66,8 @@ Open [http://localhost:3000](http://localhost:3000) to see the application.
 ├── components/           # React components
 ├── convex/              # Convex backend functions
 ├── hooks/               # Custom React hooks
-├── lib/                 # Utility functions
-└── docs/                # Documentation
+└── lib/                 # Utility functions
 ```
-
-## Documentation
-
-- [Authentication Setup](docs/AUTHENTICATION.md)
-- [Convex Setup Guide](docs/CONVEX_SETUP.md)
 
 ## Learn More
 
