@@ -1,21 +1,41 @@
+"use client";
+
 import { Header } from "@/components/header";
 import { StoreUserWrapper } from "@/components/store-user-wrapper";
+import { UserSidebar } from "@/components/user-sidebar";
+import { useState } from "react";
 
 export default function Home() {
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+
   return (
     <StoreUserWrapper>
-      <div className="min-h-screen bg-background">
+      <div className="flex h-screen flex-col bg-background">
         <Header />
-        <main className="container mx-auto px-4 py-8">
-          <div className="flex flex-col items-center justify-center gap-6 text-center">
-            <h1 className="text-4xl font-bold text-foreground">
-              Welcome to Chatify
-            </h1>
-            <p className="max-w-md text-lg text-muted-foreground">
-              Your real-time chat application is ready. Start building your chat features!
-            </p>
-          </div>
-        </main>
+        <div className="flex flex-1 overflow-hidden">
+          <UserSidebar onUserSelect={setSelectedUserId} />
+          <main className="flex flex-1 items-center justify-center">
+            {selectedUserId ? (
+              <div className="text-center">
+                <p className="text-lg text-muted-foreground">
+                  Chat with user: {selectedUserId}
+                </p>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  Chat functionality coming soon...
+                </p>
+              </div>
+            ) : (
+              <div className="text-center">
+                <h2 className="text-2xl font-semibold text-foreground">
+                  Welcome to Chatify
+                </h2>
+                <p className="mt-2 text-muted-foreground">
+                  Select a user from the sidebar to start chatting
+                </p>
+              </div>
+            )}
+          </main>
+        </div>
       </div>
     </StoreUserWrapper>
   );

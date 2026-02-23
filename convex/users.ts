@@ -8,16 +8,14 @@ export const storeUser = mutation({
     name: v.string(),
     avatarUrl: v.string(),
   },
-  
+
   handler: async (ctx, args) => {
-    // Check if user already exists
     const existingUser = await ctx.db
       .query("users")
       .withIndex("by_clerk_id", (q) => q.eq("clerkId", args.clerkId))
       .unique();
 
     if (existingUser) {
-      // Update existing user
       await ctx.db.patch(existingUser._id, {
         email: args.email,
         name: args.name,
@@ -26,7 +24,6 @@ export const storeUser = mutation({
       return existingUser._id;
     }
 
-    // Create new user
     const userId = await ctx.db.insert("users", {
       clerkId: args.clerkId,
       email: args.email,
@@ -65,5 +62,18 @@ export const getUserByClerkId = query({
       .unique();
 
     return user;
+  },
+});
+
+export const getUsers = query({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      return [];
+    }
+
+    const users = await ctx.db.query("users").collect();
+    return users.filter((user) => user.clerkId !== identity.subject);
   },
 });
