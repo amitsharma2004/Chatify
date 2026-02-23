@@ -7,6 +7,8 @@ import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Trash2 } from "lucide-react";
 import { useState } from "react";
+import { ReactionPicker } from "./reaction-picker";
+import { MessageReactions } from "./message-reactions";
 
 interface MessageWithSender {
   _id: Id<"messages">;
@@ -25,6 +27,7 @@ interface MessageBubbleProps {
 
 export function MessageBubble({ message, isCurrentUser }: MessageBubbleProps) {
   const deleteMessage = useMutation(api.messages.deleteMessage);
+  const toggleReaction = useMutation(api.reactions.toggleReaction);
   const [isDeleting, setIsDeleting] = useState(false);
 
   const handleDelete = async () => {
@@ -37,6 +40,14 @@ export function MessageBubble({ message, isCurrentUser }: MessageBubbleProps) {
       console.error("Error deleting message:", error);
     } finally {
       setIsDeleting(false);
+    }
+  };
+
+  const handleReaction = async (emoji: string) => {
+    try {
+      await toggleReaction({ messageId: message._id, emoji });
+    } catch (error) {
+      console.error("Error toggling reaction:", error);
     }
   };
 
@@ -74,17 +85,27 @@ export function MessageBubble({ message, isCurrentUser }: MessageBubbleProps) {
               <p className="text-sm">{message.content}</p>
             )}
           </div>
-          {isCurrentUser && !message.isDeleted && (
-            <button
-              onClick={handleDelete}
-              disabled={isDeleting}
-              className="absolute -right-8 top-1/2 -translate-y-1/2 rounded p-1 opacity-0 transition-opacity hover:bg-secondary group-hover:opacity-100 disabled:opacity-50"
-              title="Delete message"
+          {!message.isDeleted && (
+            <div
+              className={`absolute top-1/2 -translate-y-1/2 flex gap-1 ${
+                isCurrentUser ? "-left-20" : "-right-20"
+              }`}
             >
-              <Trash2 className="h-4 w-4 text-muted-foreground" />
-            </button>
+              <ReactionPicker onEmojiSelect={handleReaction} />
+              {isCurrentUser && (
+                <button
+                  onClick={handleDelete}
+                  disabled={isDeleting}
+                  className="rounded p-1 opacity-0 transition-opacity hover:bg-secondary group-hover:opacity-100 disabled:opacity-50"
+                  title="Delete message"
+                >
+                  <Trash2 className="h-4 w-4 text-muted-foreground" />
+                </button>
+              )}
+            </div>
           )}
         </div>
+        <MessageReactions messageId={message._id} onReactionClick={handleReaction} />
         <span className="mt-1 text-xs text-muted-foreground">
           {formatMessageTime(message.createdAt)}
         </span>
