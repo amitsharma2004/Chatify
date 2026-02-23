@@ -4,6 +4,7 @@ import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { MessageBubble } from "./message-bubble";
 import { MessageInput } from "./message-input";
+import { TypingIndicator } from "./typing-indicator";
 import { EmptyState } from "./empty-state";
 import { useEffect, useRef } from "react";
 import { Id } from "@/convex/_generated/dataModel";
@@ -20,6 +21,7 @@ export function ChatArea({ conversationId }: ChatAreaProps) {
     conversationId: conversationId as Id<"conversations">,
   });
   const sendMessage = useMutation(api.messages.sendMessage);
+  const setTypingStatus = useMutation(api.users.setTypingStatus);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -35,6 +37,16 @@ export function ChatArea({ conversationId }: ChatAreaProps) {
       conversationId: conversationId as Id<"conversations">,
       content,
     });
+  };
+
+  const handleTypingChange = async (isTyping: boolean) => {
+    try {
+      await setTypingStatus({
+        conversationId: isTyping ? (conversationId as Id<"conversations">) : undefined,
+      });
+    } catch (error) {
+      console.error("Error updating typing status:", error);
+    }
   };
 
   return (
@@ -65,7 +77,8 @@ export function ChatArea({ conversationId }: ChatAreaProps) {
           </div>
         )}
       </div>
-      <MessageInput onSendMessage={handleSendMessage} />
+      <TypingIndicator conversationId={conversationId} />
+      <MessageInput onSendMessage={handleSendMessage} onTypingChange={handleTypingChange} />
     </div>
   );
 }

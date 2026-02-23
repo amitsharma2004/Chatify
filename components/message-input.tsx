@@ -1,21 +1,50 @@
 "use client";
 
-import { useState, KeyboardEvent } from "react";
+import { useState, KeyboardEvent, useEffect, useRef } from "react";
 import { Send } from "lucide-react";
 
 interface MessageInputProps {
   onSendMessage: (content: string) => Promise<void>;
+  onTypingChange?: (isTyping: boolean) => void;
   disabled?: boolean;
 }
 
-export function MessageInput({ onSendMessage, disabled }: MessageInputProps) {
+export function MessageInput({ onSendMessage, onTypingChange, disabled }: MessageInputProps) {
   const [message, setMessage] = useState("");
   const [isSending, setIsSending] = useState(false);
+  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    if (message.trim() && onTypingChange) {
+      onTypingChange(true);
+
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
+
+      typingTimeoutRef.current = setTimeout(() => {
+        onTypingChange(false);
+      }, 2000);
+    }
+
+    return () => {
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
+    };
+  }, [message, onTypingChange]);
 
   const handleSend = async () => {
     if (!message.trim() || isSending) return;
 
     setIsSending(true);
+    if (onTypingChange) {
+      onTypingChange(false);
+    }
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
+
     try {
       await onSendMessage(message.trim());
       setMessage("");

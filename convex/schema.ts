@@ -10,6 +10,7 @@ export default defineSchema({
     createdAt: v.number(),
     isOnline: v.optional(v.boolean()),
     lastSeen: v.optional(v.number()),
+    typingInConversation: v.optional(v.id("conversations")),
   })
     .index("by_clerk_id", ["clerkId"])
     .index("by_email", ["email"]),
