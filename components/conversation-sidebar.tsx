@@ -19,7 +19,7 @@ export function ConversationSidebar({
   const conversations = useQuery(api.conversations.getConversations);
 
   return (
-    <div className="flex h-full w-80 flex-col border-r border-border bg-background">
+    <div className="flex h-full w-full flex-col border-r border-border bg-background">
       <div className="border-b border-border p-4">
         <div className="flex items-center gap-2">
           <MessageSquare className="h-5 w-5 text-primary" />

@@ -33,32 +33,49 @@ export default function Home() {
     }
   };
 
+  const handleBackToList = () => {
+    setSelectedConversationId(null);
+  };
+
   return (
     <StoreUserWrapper>
       <div className="flex h-screen flex-col bg-background">
         <Header />
         <div className="flex flex-1 overflow-hidden">
-          {showUserList ? (
-            <UserSidebar onUserSelect={handleUserSelect} />
-          ) : (
-            <ConversationSidebar
-              selectedConversationId={selectedConversationId}
-              onConversationSelect={setSelectedConversationId}
-            />
-          )}
-          
-          <main className="flex flex-1 flex-col">
+          <div
+            className={`${
+              selectedConversationId ? "hidden md:flex" : "flex"
+            } w-full md:w-80`}
+          >
+            {showUserList ? (
+              <UserSidebar onUserSelect={handleUserSelect} />
+            ) : (
+              <ConversationSidebar
+                selectedConversationId={selectedConversationId}
+                onConversationSelect={setSelectedConversationId}
+              />
+            )}
+          </div>
+
+          <main
+            className={`${
+              selectedConversationId ? "flex" : "hidden md:flex"
+            } flex-1 flex-col`}
+          >
             {selectedConversationId && selectedConversation ? (
               <>
-                <ChatHeader otherParticipant={selectedConversation.otherParticipant} />
+                <ChatHeader
+                  otherParticipant={selectedConversation.otherParticipant}
+                  onBack={handleBackToList}
+                />
                 <ChatArea conversationId={selectedConversationId} />
               </>
             ) : (
-              <div className="flex flex-1 flex-col items-center justify-center">
+              <div className="flex flex-1 flex-col items-center justify-center p-4">
                 <h2 className="text-2xl font-semibold text-foreground">
                   Welcome to Chatify
                 </h2>
-                <p className="mt-2 text-muted-foreground">
+                <p className="mt-2 text-center text-muted-foreground">
                   Select a conversation or start a new one
                 </p>
                 <button

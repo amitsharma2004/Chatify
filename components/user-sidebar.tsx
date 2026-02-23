@@ -29,7 +29,7 @@ export function UserSidebar({ onUserSelect }: UserSidebarProps) {
   }, [users, searchQuery]);
 
   return (
-    <div className="flex h-full w-80 flex-col border-r border-border bg-background">
+    <div className="flex h-full w-full flex-col border-r border-border bg-background">
       <div className="border-b border-border p-4">
         <h2 className="text-lg font-semibold text-foreground">Messages</h2>
       </div>
