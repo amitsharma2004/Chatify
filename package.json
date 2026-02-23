@@ -9,7 +9,7 @@
     "lint": "eslint",
     "convex:dev": "convex dev",
     "convex:deploy": "convex deploy",
-    "vercel-build": "npx convex deploy --cmd 'npm run build' --cmd-url-env-var-name NEXT_PUBLIC_CONVEX_URL"
+    "vercel-build": "npx convex deploy --cmd 'npx convex codegen && npm run build' --cmd-url-env-var-name NEXT_PUBLIC_CONVEX_URL"
   },
   "dependencies": {
     "@clerk/clerk-react": "^5.61.1",
