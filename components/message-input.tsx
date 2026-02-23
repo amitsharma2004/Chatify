@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, KeyboardEvent, useEffect, useRef } from "react";
-import { Send } from "lucide-react";
+import { Send, Loader2, AlertCircle } from "lucide-react";
 
 interface MessageInputProps {
   onSendMessage: (content: string) => Promise<void>;
@@ -12,6 +12,7 @@ interface MessageInputProps {
 export function MessageInput({ onSendMessage, onTypingChange, disabled }: MessageInputProps) {
   const [message, setMessage] = useState("");
   const [isSending, setIsSending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
@@ -38,6 +39,7 @@ export function MessageInput({ onSendMessage, onTypingChange, disabled }: Messag
     if (!message.trim() || isSending) return;
 
     setIsSending(true);
+    setError(null);
     if (onTypingChange) {
       onTypingChange(false);
     }
@@ -50,6 +52,7 @@ export function MessageInput({ onSendMessage, onTypingChange, disabled }: Messag
       setMessage("");
     } catch (error) {
       console.error("Error sending message:", error);
+      setError(error instanceof Error ? error.message : "Failed to send message");
     } finally {
       setIsSending(false);
     }
@@ -64,6 +67,18 @@ export function MessageInput({ onSendMessage, onTypingChange, disabled }: Messag
 
   return (
     <div className="border-t border-border bg-background p-4">
+      {error && (
+        <div className="mb-3 flex items-center gap-2 rounded-lg bg-destructive/10 p-3 text-sm text-destructive">
+          <AlertCircle className="h-4 w-4 flex-shrink-0" />
+          <span className="flex-1">{error}</span>
+          <button
+            onClick={() => setError(null)}
+            className="text-xs underline hover:no-underline"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
       <div className="flex items-end gap-2">
         <textarea
           value={message}
@@ -79,7 +94,11 @@ export function MessageInput({ onSendMessage, onTypingChange, disabled }: Messag
           disabled={!message.trim() || disabled || isSending}
           className="rounded-lg bg-primary p-2 text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          <Send className="h-5 w-5" />
+          {isSending ? (
+            <Loader2 className="h-5 w-5 animate-spin" />
+          ) : (
+            <Send className="h-5 w-5" />
+          )}
         </button>
       </div>
       <p className="mt-1 text-xs text-muted-foreground">

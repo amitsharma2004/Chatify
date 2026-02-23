@@ -10,10 +10,12 @@ import { useState } from "react";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
+import { AlertCircle } from "lucide-react";
 
 export default function Home() {
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
   const [showUserList, setShowUserList] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const createOrGetConversation = useMutation(api.conversations.createOrGetConversation);
   const conversations = useQuery(api.conversations.getConversations);
 
@@ -23,6 +25,7 @@ export default function Home() {
 
   const handleUserSelect = async (userId: string) => {
     try {
+      setError(null);
       const conversationId = await createOrGetConversation({
         participantId: userId as Id<"users">,
       });
@@ -30,6 +33,7 @@ export default function Home() {
       setShowUserList(false);
     } catch (error) {
       console.error("Error creating conversation:", error);
+      setError(error instanceof Error ? error.message : "Failed to create conversation");
     }
   };
 
@@ -41,6 +45,18 @@ export default function Home() {
     <StoreUserWrapper>
       <div className="flex h-screen flex-col bg-background">
         <Header />
+        {error && (
+          <div className="flex items-center gap-2 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+            <AlertCircle className="h-4 w-4 flex-shrink-0" />
+            <span className="flex-1">{error}</span>
+            <button
+              onClick={() => setError(null)}
+              className="text-xs underline hover:no-underline"
+            >
+              Dismiss
+            </button>
+          </div>
+        )}
         <div className="flex flex-1 overflow-hidden">
           <div
             className={`${
