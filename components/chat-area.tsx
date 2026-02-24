@@ -138,11 +138,16 @@ export function ChatArea({ conversationId, isGroupChat }: ChatAreaProps) {
   const handleTypingChange = async (isTyping: boolean) => {
     const now = Date.now();
     
+    // Throttle only when setting to true (typing started)
+    // Always allow setting to false immediately (typing stopped)
     if (isTyping) {
       if (now - lastTypingUpdateRef.current < 1500) {
         return;
       }
       lastTypingUpdateRef.current = now;
+    } else {
+      // Reset throttle when stopping typing
+      lastTypingUpdateRef.current = 0;
     }
     
     try {

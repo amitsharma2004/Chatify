@@ -15,6 +15,16 @@ export function MessageInput({ onSendMessage, onTypingChange, disabled }: Messag
   const [error, setError] = useState<string | null>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const isTypingRef = useRef(false);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Auto-resize textarea
+  useEffect(() => {
+    const textarea = textareaRef.current;
+    if (textarea) {
+      textarea.style.height = "auto";
+      textarea.style.height = `${Math.min(textarea.scrollHeight, 200)}px`;
+    }
+  }, [message]);
 
   useEffect(() => {
     if (message.trim() && onTypingChange) {
@@ -57,16 +67,18 @@ export function MessageInput({ onSendMessage, onTypingChange, disabled }: Messag
   const handleSend = async () => {
     if (!message.trim() || isSending) return;
 
-    setIsSending(true);
-    setError(null);
-    
+    // Clear typing status BEFORE sending
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+      typingTimeoutRef.current = null;
+    }
     if (onTypingChange && isTypingRef.current) {
       isTypingRef.current = false;
       onTypingChange(false);
     }
-    if (typingTimeoutRef.current) {
-      clearTimeout(typingTimeoutRef.current);
-    }
+
+    setIsSending(true);
+    setError(null);
 
     try {
       await onSendMessage(message.trim());
@@ -102,13 +114,14 @@ export function MessageInput({ onSendMessage, onTypingChange, disabled }: Messag
       )}
       <div className="flex items-end gap-2">
         <textarea
+          ref={textareaRef}
           value={message}
           onChange={(e) => setMessage(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder="Type a message..."
           disabled={disabled || isSending}
           rows={1}
-          className="flex-1 resize-none rounded-lg border border-input bg-background px-4 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50"
+          className="flex-1 resize-none rounded-lg border border-input bg-background px-4 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50 max-h-[200px] overflow-y-auto scrollbar-hide"
         />
         <button
           onClick={handleSend}
