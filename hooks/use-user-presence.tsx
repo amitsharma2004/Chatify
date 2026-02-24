@@ -5,7 +5,7 @@ import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 
 // Heartbeat interval - how often to ping the server
-const HEARTBEAT_INTERVAL = 30000; // 30 seconds
+const HEARTBEAT_INTERVAL = 15000; // 15 seconds (reduced from 30)
 const INITIAL_DELAY = 500; // Initial delay before first update
 
 export function useUserPresence() {

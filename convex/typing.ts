@@ -20,13 +20,28 @@ export const getTypingUsers = query({
       return [];
     }
 
+    const STALE_THRESHOLD = 25000; // 25 seconds (1.67x heartbeat of 15s)
+    const now = Date.now();
+
     const allUsers = await ctx.db.query("users").collect();
     
-    const typingUsers = allUsers.filter(
-      (user) =>
-        user.typingInConversation === args.conversationId &&
-        user._id !== currentUser._id
-    );
+    const typingUsers = allUsers.filter((user) => {
+      // Check if user is typing in this conversation
+      if (user.typingInConversation !== args.conversationId) {
+        return false;
+      }
+      
+      // Exclude current user
+      if (user._id === currentUser._id) {
+        return false;
+      }
+      
+      // Only show typing if user is actually online
+      const isStale = user.lastSeen ? (now - user.lastSeen) > STALE_THRESHOLD : true;
+      const isOnline = user.isOnline && !isStale;
+      
+      return isOnline;
+    });
 
     return typingUsers;
   },

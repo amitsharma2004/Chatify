@@ -73,7 +73,7 @@ export const getUsers = query({
       return [];
     }
 
-    const STALE_THRESHOLD = 45000; // 45 seconds (1.5x heartbeat interval)
+    const STALE_THRESHOLD = 25000; // 25 seconds (1.67x heartbeat of 15s)
     const now = Date.now();
 
     const users = await ctx.db.query("users").collect();
@@ -112,10 +112,17 @@ export const updateUserStatus = mutation({
       return;
     }
 
-    await ctx.db.patch(user._id, {
+    // When going offline, clear typing status
+    const updateData: any = {
       isOnline: args.isOnline,
       lastSeen: Date.now(),
-    });
+    };
+    
+    if (!args.isOnline) {
+      updateData.typingInConversation = undefined;
+    }
+
+    await ctx.db.patch(user._id, updateData);
   },
 });
 

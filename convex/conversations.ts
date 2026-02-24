@@ -103,7 +103,7 @@ export const getConversations = query({
       return [];
     }
 
-    const STALE_THRESHOLD = 45000; // 45 seconds
+    const STALE_THRESHOLD = 25000; // 25 seconds (1.67x heartbeat of 15s)
     const now = Date.now();
 
     const allConversations = await ctx.db.query("conversations").collect();
