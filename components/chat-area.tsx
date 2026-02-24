@@ -34,6 +34,14 @@ export function ChatArea({ conversationId, isGroupChat }: ChatAreaProps) {
   const lastTypingUpdateRef = useRef(0);
   const lastMarkAsReadRef = useRef(0);
 
+  useEffect(() => {
+    setTypingStatus({ conversationId: undefined }).catch(() => {});
+    
+    return () => {
+      setTypingStatus({ conversationId: undefined }).catch(() => {});
+    };
+  }, [conversationId, setTypingStatus]);
+
   const scrollToBottom = (behavior: ScrollBehavior = "smooth") => {
     messagesEndRef.current?.scrollIntoView({ behavior });
   };
@@ -128,20 +136,21 @@ export function ChatArea({ conversationId, isGroupChat }: ChatAreaProps) {
   };
 
   const handleTypingChange = async (isTyping: boolean) => {
-    // Throttle typing status updates
     const now = Date.now();
-    if (now - lastTypingUpdateRef.current < 2000) {
-      return; // Don't update more than once every 2 seconds
-    }
     
-    lastTypingUpdateRef.current = now;
+    if (isTyping) {
+      if (now - lastTypingUpdateRef.current < 1500) {
+        return;
+      }
+      lastTypingUpdateRef.current = now;
+    }
     
     try {
       await setTypingStatus({
         conversationId: isTyping ? (conversationId as Id<"conversations">) : undefined,
       });
     } catch (error) {
-      // Silently fail to prevent error spam
+      // Silently fail
     }
   };
 

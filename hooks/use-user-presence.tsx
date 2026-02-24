@@ -12,46 +12,60 @@ export function useUserPresence() {
   const updateUserStatus = useMutation(api.users.updateUserStatus);
   const currentUser = useQuery(api.users.getCurrentUser);
   const mountedRef = useRef(false);
+  const cleanupRef = useRef(false);
+  const lastUpdateTimeRef = useRef(0);
 
   useEffect(() => {
     if (!currentUser || mountedRef.current) return;
     
     mountedRef.current = true;
-    const MIN_UPDATE_INTERVAL = 10000; // 10 seconds minimum between any updates
+    cleanupRef.current = false;
+    const MIN_UPDATE_INTERVAL = 8000;
 
     const setOnline = () => {
+      if (cleanupRef.current) return;
+      
       const now = Date.now();
-      if (globalIsUpdating || now - globalLastUpdate < MIN_UPDATE_INTERVAL) {
+      if (globalIsUpdating || now - lastUpdateTimeRef.current < MIN_UPDATE_INTERVAL) {
         return;
       }
 
       globalIsUpdating = true;
+      lastUpdateTimeRef.current = now;
       globalLastUpdate = now;
       
       updateUserStatus({ isOnline: true })
-        .catch(() => {}) // Silently fail
+        .catch(() => {})
         .finally(() => {
           setTimeout(() => {
             globalIsUpdating = false;
-          }, 1000);
+          }, 500);
         });
     };
 
     const setOffline = () => {
+      if (cleanupRef.current) return;
+      
+      const now = Date.now();
       if (globalIsUpdating) return;
       
       globalIsUpdating = true;
+      lastUpdateTimeRef.current = now;
+      
       updateUserStatus({ isOnline: false })
         .catch(() => {})
         .finally(() => {
-          globalIsUpdating = false;
+          setTimeout(() => {
+            globalIsUpdating = false;
+          }, 500);
         });
     };
 
-    // Only set online once on mount
-    setTimeout(setOnline, 1000);
+    setTimeout(setOnline, 500);
 
     const handleVisibilityChange = () => {
+      if (cleanupRef.current) return;
+      
       if (document.hidden) {
         setOffline();
       } else {
@@ -59,23 +73,27 @@ export function useUserPresence() {
       }
     };
 
-    document.addEventListener("visibilitychange", handleVisibilityChange);
+    const handleBeforeUnload = () => {
+      cleanupRef.current = true;
+      navigator.sendBeacon && updateUserStatus({ isOnline: false }).catch(() => {});
+    };
 
-    // Much longer heartbeat - 2 minutes
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
     const interval = setInterval(() => {
-      if (!document.hidden) {
+      if (!document.hidden && !cleanupRef.current) {
         setOnline();
       }
-    }, 120000);
+    }, 90000);
 
     return () => {
+      cleanupRef.current = true;
       document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("beforeunload", handleBeforeUnload);
       clearInterval(interval);
       mountedRef.current = false;
-      // Don't call setOffline on unmount during development (hot reload)
-      if (process.env.NODE_ENV === 'production') {
-        setOffline();
-      }
+      setOffline();
     };
   }, [updateUserStatus, currentUser]);
 }

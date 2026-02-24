@@ -28,23 +28,31 @@ export function MessageInput({ onSendMessage, onTypingChange, disabled }: Messag
       }
 
       typingTimeoutRef.current = setTimeout(() => {
-        isTypingRef.current = false;
-        onTypingChange(false);
-      }, 3000);
+        if (isTypingRef.current) {
+          isTypingRef.current = false;
+          onTypingChange(false);
+        }
+      }, 2000);
     } else if (!message.trim() && onTypingChange && isTypingRef.current) {
-      isTypingRef.current = false;
-      onTypingChange(false);
       if (typingTimeoutRef.current) {
         clearTimeout(typingTimeoutRef.current);
       }
+      isTypingRef.current = false;
+      onTypingChange(false);
     }
+  }, [message, onTypingChange]);
 
+  useEffect(() => {
     return () => {
       if (typingTimeoutRef.current) {
         clearTimeout(typingTimeoutRef.current);
       }
+      if (isTypingRef.current && onTypingChange) {
+        isTypingRef.current = false;
+        onTypingChange(false);
+      }
     };
-  }, [message, onTypingChange]);
+  }, [onTypingChange]);
 
   const handleSend = async () => {
     if (!message.trim() || isSending) return;
