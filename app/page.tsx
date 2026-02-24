@@ -96,7 +96,7 @@ export default function Home() {
           <main
             className={`${
               selectedConversationId ? "flex" : "hidden md:flex"
-            } flex-1 flex-col`}
+            } flex-1 flex-col overflow-hidden`}
           >
             {selectedConversationId && selectedConversation ? (
               <>

@@ -75,7 +75,7 @@ export function useUserPresence() {
 
     const handleBeforeUnload = () => {
       cleanupRef.current = true;
-      navigator.sendBeacon && updateUserStatus({ isOnline: false }).catch(() => {});
+      updateUserStatus({ isOnline: false }).catch(() => {});
     };
 
     document.addEventListener("visibilitychange", handleVisibilityChange);

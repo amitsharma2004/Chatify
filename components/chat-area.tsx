@@ -160,7 +160,7 @@ export function ChatArea({ conversationId, isGroupChat }: ChatAreaProps) {
   };
 
   return (
-    <div className="flex flex-1 flex-col">
+    <div className="flex flex-1 flex-col overflow-hidden">
       <div
         ref={scrollContainerRef}
         className="relative flex-1 overflow-y-auto p-4"
