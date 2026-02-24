@@ -73,8 +73,23 @@ export const getUsers = query({
       return [];
     }
 
+    const STALE_THRESHOLD = 45000; // 45 seconds (1.5x heartbeat interval)
+    const now = Date.now();
+
     const users = await ctx.db.query("users").collect();
-    return users.filter((user) => user.clerkId !== identity.subject);
+    
+    return users
+      .filter((user) => user.clerkId !== identity.subject)
+      .map((user) => {
+        // User is online if they marked themselves online AND their last heartbeat is recent
+        const isStale = user.lastSeen ? (now - user.lastSeen) > STALE_THRESHOLD : true;
+        const actuallyOnline = user.isOnline && !isStale;
+        
+        return {
+          ...user,
+          isOnline: actuallyOnline,
+        };
+      });
   },
 });
 

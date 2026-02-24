@@ -103,6 +103,9 @@ export const getConversations = query({
       return [];
     }
 
+    const STALE_THRESHOLD = 45000; // 45 seconds
+    const now = Date.now();
+
     const allConversations = await ctx.db.query("conversations").collect();
     
     const userConversations = allConversations.filter((conversation) =>
@@ -116,15 +119,37 @@ export const getConversations = query({
 
         if (conversation.isGroup) {
           participants = await Promise.all(
-            conversation.participantIds.map((id) => ctx.db.get(id))
+            conversation.participantIds.map(async (id) => {
+              const user = await ctx.db.get(id);
+              if (!user) return null;
+              
+              // Compute actual online status
+              const isStale = user.lastSeen ? (now - user.lastSeen) > STALE_THRESHOLD : true;
+              const actuallyOnline = user.isOnline && !isStale;
+              
+              return {
+                ...user,
+                isOnline: actuallyOnline,
+              };
+            })
           );
         } else {
           const otherParticipantId = conversation.participantIds.find(
             (id) => id !== currentUser._id
           );
-          otherParticipant = otherParticipantId
-            ? await ctx.db.get(otherParticipantId)
-            : null;
+          if (otherParticipantId) {
+            const user = await ctx.db.get(otherParticipantId);
+            if (user) {
+              // Compute actual online status
+              const isStale = user.lastSeen ? (now - user.lastSeen) > STALE_THRESHOLD : true;
+              const actuallyOnline = user.isOnline && !isStale;
+              
+              otherParticipant = {
+                ...user,
+                isOnline: actuallyOnline,
+              };
+            }
+          }
         }
 
         const messages = await ctx.db
